@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 from datetime import datetime
 
-# Sayfa ayarları
 st.set_page_config(
     page_title="BMI Hesaplayıcı",
     layout="centered",
@@ -46,6 +44,16 @@ def ideal_kilo_hesapla(boy, cinsiyet):
     else:
         return round(45.5 + 0.91 * (boy - 152.4), 1)
 
+def akilli_yorum(bmi, boy, kilo):
+    if bmi < 18.5:
+        return f"Boyunuz {boy} cm ve kilonuz {kilo} kg. Bu, BMI değerinizin {bmi:.1f} olduğunu gösteriyor. Bu değer zayıf kategorisine giriyor. Daha dengeli ve yeterli beslenerek sağlıklı kilonuza ulaşabilirsiniz."
+    elif 18.5 <= bmi < 25:
+        return f"Tebrikler! Boyunuz {boy} cm ve kilonuz {kilo} kg ile BMI değeriniz {bmi:.1f}. Bu değer normal aralıktadır. Bu formu korumak için dengeli beslenmeye ve düzenli aktiviteye devam edin."
+    elif 25 <= bmi < 30:
+        return f"Boyunuz {boy} cm ve kilonuz {kilo} kg. BMI değeriniz {bmi:.1f}, yani fazla kilolu kategorisindesiniz. Haftalık yürüyüş ve karbonhidrat azaltımı ile ideal kiloya ulaşmanız mümkündür."
+    else:
+        return f"Boyunuz {boy} cm ve kilonuz {kilo} kg. BMI değeriniz {bmi:.1f}. Bu, obezite kategorisine giriyor. Uzman eşliğinde diyet ve egzersiz planı uygulamanız önerilir."
+
 if st.button("📊 Hesapla"):
     if boy > 0:
         boy_metre = boy / 100
@@ -65,6 +73,18 @@ if st.button("📊 Hesapla"):
         ideal_kilo = ideal_kilo_hesapla(boy, cinsiyet)
         st.markdown(f"🎯 **Boyunuza göre ideal kilo:** `{ideal_kilo} kg`")
 
+        # Akıllı öneri
+        st.markdown("### 🧠 Akıllı Yorum")
+        yorum = akilli_yorum(bmi, boy, kilo)
+        st.info(yorum)
+
+        # Paylaşılabilir metin
+        st.markdown("### 📤 Sonucunuzu paylaşın")
+        paylasilabilir = f"Benim BMI değerim {bmi:.1f} ve {boy}cm boy / {kilo}kg ile {ideal_kilo}kg ideal kilonun {abs(kilo - ideal_kilo):.1f}kg kadar dışındayım."
+        st.code(paylasilabilir, language="markdown")
+        st.caption("Bu metni kopyalayıp arkadaşlarınla paylaşabilirsin!")
+
+        # Veriyi CSV'ye yaz
         tarih = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         yeni_kayit = pd.DataFrame([[tarih, boy, kilo, bmi]], columns=["Tarih", "Boy", "Kilo", "BMI"])
         try:
@@ -74,17 +94,8 @@ if st.button("📊 Hesapla"):
             guncel = yeni_kayit
         guncel.to_csv("bmi_kayitlari.csv", index=False)
 
-        st.markdown("### 📈 Kendi BMI Geçmişiniz")
+        # Grafik
+        st.markdown("### 📈 BMI Geçmişiniz")
         st.line_chart(guncel[["BMI"]])
-
-        st.markdown("### 💬 Tavsiye")
-        if bmi < 18.5:
-            st.caption("🍽️ Dengeli beslenmeye özen gösterin.")
-        elif 18.5 <= bmi < 25:
-            st.caption("👍 Mevcut kilonuzu korumaya devam edin.")
-        elif 25 <= bmi < 30:
-            st.caption("🚶 Düzenli egzersizle ideal kiloya yaklaşabilirsiniz.")
-        else:
-            st.caption("👨‍⚕️ Uzman desteği ile kilo vermeniz önerilir.")
     else:
         st.error("Lütfen geçerli bir boy girin.")
